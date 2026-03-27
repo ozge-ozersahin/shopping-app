@@ -1,12 +1,17 @@
-import { Product } from '@/src/types/product';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View,} from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+
 import { getProducts } from '@/src/api/products';
 import ProductCard from '@/src/components/ProductCard';
+import type { Category } from '@/src/types/category';
+import type { Product } from '@/src/types/product';
 
-export default function ProductsScreen() {
+export default function CategoryProductsScreen() {
+  const { category } = useLocalSearchParams<{ category: string }>();
+
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -15,22 +20,24 @@ export default function ProductsScreen() {
         setLoading(true);
         setError('');
 
-        const data = await getProducts();
+        const data = await getProducts(category as Category);
         setProducts(data);
       } catch (err) {
-        setError('Could not load products.');
+        setError('Could not load products for this category.');
       } finally {
         setLoading(false);
       }
     }
 
-    loadProducts();
-  }, []);
+    if (category) {
+      loadProducts();
+    }
+  }, [category]);
 
   const renderProduct = ({ item }: { item: Product }) => {
     return <ProductCard product={item} />;
   };
-  
+
   const getProductKey = (item: Product) => item.id.toString();
 
   if (loading) {
@@ -52,13 +59,13 @@ export default function ProductsScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Products</Text>
+      <Text style={styles.title}>{category} products</Text>
 
       <FlatList
         data={products}
         keyExtractor={getProductKey}
         renderItem={renderProduct}
-        ListEmptyComponent={<Text>No products found.</Text>}
+        ListEmptyComponent={<Text>No products found for this category.</Text>}
         contentContainerStyle={products.length === 0 ? styles.emptyList : undefined}
       />
     </View>
@@ -80,6 +87,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '600',
     marginBottom: 16,
+    textTransform: 'capitalize',
   },
   message: {
     marginTop: 8,
