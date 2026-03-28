@@ -19,7 +19,7 @@ export default function ProductsScreen() {
       try {
         setLoading(true);
         setError('');
-  
+
         const productsData = await getProducts();
         setProducts(productsData);
       } catch (err) {
@@ -28,7 +28,7 @@ export default function ProductsScreen() {
         setLoading(false);
         return;
       }
-  
+
       try {
         if (!cartId) {
           const cartData = await createCart();
@@ -41,7 +41,7 @@ export default function ProductsScreen() {
         setLoading(false);
       }
     }
-  
+
     loadInitialData();
   }, [cartId, setCartId]);
 
@@ -56,12 +56,17 @@ export default function ProductsScreen() {
       }
 
       await addItemToCart(currentCartId, productId, quantity);
+      setError('');
     } catch (err: any) {
+
+
       const message = String(err?.message || '').toLowerCase();
 
       if (message.includes('expired')) {
         clearCart();
         setError('Your session has expired. Please start again.');
+      } else if (message.includes('stock')) {
+        setError('There is no more stock for this product.');
       } else {
         setError('Could not add item to cart.');
       }

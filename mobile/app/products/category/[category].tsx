@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-
 import { getProducts } from '@/src/api/products';
 import ProductCard from '@/src/components/ProductCard';
 import type { Category } from '@/src/types/category';
 import type { Product } from '@/src/types/product';
+import { createCart, addItemToCart } from '@/src/api/cart';
+import { useCartContext } from '@/src/context/CartContext';
+import { Stack, useLocalSearchParams } from 'expo-router';
 
 export default function CategoryProductsScreen() {
   const { category } = useLocalSearchParams<{ category: string }>();
+  const { cartId, setCartId, clearCart } = useCartContext();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,8 +36,34 @@ export default function CategoryProductsScreen() {
     }
   }, [category]);
 
+  const handleAddToCart = async (productId: number, quantity: number) => {
+    try {
+      let currentCartId = cartId;
+
+      if (!currentCartId) {
+        const cartData = await createCart();
+        currentCartId = cartData.id;
+        setCartId(cartData.id);
+      }
+
+      await addItemToCart(currentCartId, productId, quantity);
+      setError('');
+    } catch (err: any) {
+      const message = String(err?.message || '').toLowerCase();
+
+      if (message.includes('expired')) {
+        clearCart();
+        setError('Your session has expired. Please start again.');
+      } else if (message.includes('stock')) {
+        setError('There is no more stock for this product.');
+      } else {
+        setError('Could not add item to cart.');
+      }
+    }
+  };
+
   const renderProduct = ({ item }: { item: Product }) => {
-    return <ProductCard product={item} />;
+    return <ProductCard product={item} onAddToCart={handleAddToCart} />;
   };
 
   const getProductKey = (item: Product) => item.id.toString();
@@ -58,17 +86,20 @@ export default function CategoryProductsScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{category} products</Text>
+    <>
+      <Stack.Screen options={{ title: `${category} Products` }} />
+      <View style={styles.container}>
+        <Text style={styles.title}>{category} products</Text>
 
-      <FlatList
-        data={products}
-        keyExtractor={getProductKey}
-        renderItem={renderProduct}
-        ListEmptyComponent={<Text>No products found for this category.</Text>}
-        contentContainerStyle={products.length === 0 ? styles.emptyList : undefined}
-      />
-    </View>
+        <FlatList
+          data={products}
+          keyExtractor={getProductKey}
+          renderItem={renderProduct}
+          ListEmptyComponent={<Text>No products found for this category.</Text>}
+          contentContainerStyle={products.length === 0 ? styles.emptyList : undefined}
+        />
+      </View>
+    </>
   );
 }
 

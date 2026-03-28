@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import type { Product } from '../types/product';
@@ -15,6 +15,7 @@ export default function ProductCard({
 }: ProductCardProps) {
   const [quantity, setQuantity] = useState(1);
   const router = useRouter();
+
   const handleDecrease = () => {
     if (quantity > 1) {
       setQuantity(quantity - 1);
@@ -22,7 +23,9 @@ export default function ProductCard({
   };
 
   const handleIncrease = () => {
-    setQuantity(quantity + 1);
+    if (quantity < product.stock) {
+      setQuantity(quantity + 1);
+    }
   };
 
   const handleAddToCart = () => {
@@ -34,29 +37,44 @@ export default function ProductCard({
 
   return (
     <View style={styles.card}>
+      <Image
+        source={{
+          uri:
+            product.imageUrl ||
+            'https://via.placeholder.com/150x100.png?text=Product',
+        }}
+        style={styles.image}
+      />
+
       <Pressable onPress={() => router.push(`/products/${product.id}`)}>
         <Text style={styles.productName}>{product.name}</Text>
       </Pressable>
+
       <Text style={styles.price}>£{product.price}</Text>
       <Text style={styles.category}>{product.category}</Text>
+      <Text style={styles.stockText}>Stock: {product.stock}</Text>
 
-      <View style={styles.actionsContainer}>
-        <View style={styles.quantityContainer}>
-          <Pressable style={styles.quantityButton} onPress={handleDecrease}>
-            <Text style={styles.quantityButtonText}>-</Text>
-          </Pressable>
+      {product.stock === 0 ? (
+        <Text style={styles.outOfStock}>Out of stock</Text>
+      ) : (
+        <View style={styles.actionsContainer}>
+          <View style={styles.quantityContainer}>
+            <Pressable style={styles.quantityButton} onPress={handleDecrease}>
+              <Text style={styles.quantityButtonText}>-</Text>
+            </Pressable>
 
-          <Text style={styles.quantityText}>{quantity}</Text>
+            <Text style={styles.quantityText}>{quantity}</Text>
 
-          <Pressable style={styles.quantityButton} onPress={handleIncrease}>
-            <Text style={styles.quantityButtonText}>+</Text>
+            <Pressable style={styles.quantityButton} onPress={handleIncrease}>
+              <Text style={styles.quantityButtonText}>+</Text>
+            </Pressable>
+          </View>
+
+          <Pressable style={styles.addButton} onPress={handleAddToCart}>
+            <Text style={styles.addButtonText}>Add to cart</Text>
           </Pressable>
         </View>
-
-        <Pressable style={styles.addButton} onPress={handleAddToCart}>
-          <Text style={styles.addButtonText}>Add to cart</Text>
-        </Pressable>
-      </View>
+      )}
     </View>
   );
 }
@@ -69,6 +87,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 12,
     backgroundColor: '#fff',
+  },
+  image: {
+    width: '100%',
+    height: 140,
+    borderRadius: 8,
+    marginBottom: 12,
   },
   productName: {
     fontSize: 18,
@@ -84,9 +108,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     textTransform: 'capitalize',
+    marginBottom: 4,
+  },
+  stockText: {
+    fontSize: 14,
+    color: '#444',
+    marginBottom: 12,
+  },
+  outOfStock: {
+    color: 'red',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 8,
   },
   actionsContainer: {
-    marginTop: 16,
+    marginTop: 8,
   },
   quantityContainer: {
     flexDirection: 'row',
