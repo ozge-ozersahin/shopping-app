@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 
 import type { Product } from '../types/product';
 
@@ -13,7 +14,7 @@ export default function ProductCard({
   onAddToCart,
 }: ProductCardProps) {
   const [quantity, setQuantity] = useState(1);
-
+  const router = useRouter();
   const handleDecrease = () => {
     if (quantity > 1) {
       setQuantity(quantity - 1);
@@ -33,7 +34,9 @@ export default function ProductCard({
 
   return (
     <View style={styles.card}>
-      <Text style={styles.productName}>{product.name}</Text>
+      <Pressable onPress={() => router.push(`/products/${product.id}`)}>
+        <Text style={styles.productName}>{product.name}</Text>
+      </Pressable>
       <Text style={styles.price}>£{product.price}</Text>
       <Text style={styles.category}>{product.category}</Text>
 

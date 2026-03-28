@@ -59,4 +59,57 @@ export async function addItemToCart(
 
   const data: Cart = await response.json();
   return data;
+
+}
+
+export async function updateCartItem(
+  cartId: number,
+  productId: number,
+  quantity: number
+): Promise<Cart> {
+  const response = await fetch(`${API_BASE_URL}/cart/${cartId}/items/${productId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ quantity }),
+  });
+
+  if (!response.ok) {
+    const message = await getErrorMessage(response, 'Failed to update item');
+    throw new Error(message);
+  }
+
+  const data: Cart = await response.json();
+  return data;
+}
+
+export async function removeCartItem(
+  cartId: number,
+  productId: number
+): Promise<Cart> {
+  const response = await fetch(`${API_BASE_URL}/cart/${cartId}/items/${productId}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    const message = await getErrorMessage(response, 'Failed to remove item');
+    throw new Error(message);
+  }
+
+  const data: Cart = await response.json();
+  return data;
+}
+
+export async function checkoutCart(cartId: number) {
+  const response = await fetch(`${API_BASE_URL}/cart/${cartId}/checkout`, {
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    const message = await getErrorMessage(response, 'Checkout failed');
+    throw new Error(message);
+  }
+
+  return response.json();
 }

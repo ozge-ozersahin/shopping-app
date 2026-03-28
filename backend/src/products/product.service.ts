@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { products } from "./product.seed";
 import { Product } from "./product.model";
 
@@ -18,4 +18,14 @@ export class ProductService {
         }
         return product;
     }
+
+    reduceStock(productId: number, quantity: number) {
+        const product = this.getProductById(productId);
+      
+        if (product.stock < quantity) {
+          throw new BadRequestException('Not enough stock');
+        }
+      
+        product.stock -= quantity;
+      }
 }

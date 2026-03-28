@@ -12,12 +12,14 @@ import { useLocalSearchParams } from 'expo-router';
 import { addItemToCart, createCart } from '@/src/api/cart';
 import { getProductById } from '@/src/api/products';
 import type { Product } from '@/src/types/product';
-
+import { useCartContext } from '@/src/context/CartContext';
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [product, setProduct] = useState<Product | null>(null);
-  const [cartId, setCartId] = useState<number | null>(null);
+
+  const { cartId, setCartId, clearCart } = useCartContext();
+
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,8 +33,6 @@ export default function ProductDetailScreen() {
         const productData = await getProductById(Number(id));
         setProduct(productData);
 
-        const cartData = await createCart();
-        setCartId(cartData.id);
       } catch (err) {
         setError('Could not load product.');
       } finally {
@@ -54,13 +54,30 @@ export default function ProductDetailScreen() {
   };
 
   const handleAddToCart = async () => {
-    if (!cartId || !product) return;
+    if (!product) return;
 
     try {
-      await addItemToCart(cartId, product.id, quantity);
+      setError('');
+
+      let currentCartId = cartId;
+
+      if (!currentCartId) {
+        const cartData = await createCart();
+        currentCartId = cartData.id;
+        setCartId(cartData.id);
+      }
+
+      await addItemToCart(currentCartId, product.id, quantity);
       setQuantity(1);
-    } catch {
-      setError('Could not add to cart');
+    } catch (err: any) {
+      const message = String(err?.message || '').toLowerCase();
+
+      if (message.includes('expired')) {
+        clearCart();
+        setError('Your session has expired. Please start again.');
+      } else {
+        setError('Could not add to cart.');
+      }
     }
   };
 

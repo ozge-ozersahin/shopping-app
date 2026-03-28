@@ -5,6 +5,7 @@ import { useFocusEffect } from 'expo-router';
 import { getCart } from '@/src/api/cart';
 import { useCartContext } from '@/src/context/CartContext';
 import type { Cart, CartItem } from '@/src/types/cart';
+import { updateCartItem, removeCartItem, checkoutCart } from '@/src/api/cart';
 
 export default function CartScreen() {
   const [cart, setCart] = useState<Cart | null>(null);
@@ -46,11 +47,18 @@ export default function CartScreen() {
     }, [cartId, clearCart])
   );
 
-  const renderCartItem = ({ item }: { item: CartItem }) => {
+  const renderCartItem = ({ item }: { item: any }) => {
     return (
       <View style={styles.itemCard}>
-        <Text style={styles.itemText}>Product ID: {item.productId}</Text>
-        <Text style={styles.itemText}>Quantity: {item.quantity}</Text>
+        <Text>{item.name}</Text>
+        <Text>£{item.price}</Text>
+        <Text>Qty: {item.quantity}</Text>
+
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <Text onPress={() => handleUpdate(item.productId, item.quantity - 1)}>-</Text>
+          <Text onPress={() => handleUpdate(item.productId, item.quantity + 1)}>+</Text>
+          <Text onPress={() => handleRemove(item.productId)}>Remove</Text>
+        </View>
       </View>
     );
   };
@@ -81,6 +89,42 @@ export default function CartScreen() {
     );
   }
 
+  const handleUpdate = async (productId: number, quantity: number) => {
+    if (!cartId || quantity < 1) return;
+
+    try {
+      const updated = await updateCartItem(cartId, productId, quantity);
+      setCart(updated);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleRemove = async (productId: number) => {
+    if (!cartId) return;
+
+    try {
+      const updated = await removeCartItem(cartId, productId);
+      setCart(updated);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleCheckout = async () => {
+    if (!cartId) return;
+
+    try {
+      await checkoutCart(cartId);
+      clearCart();
+      setCart(null);
+      setError('');
+      alert('Checkout successful');
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Cart</Text>
@@ -92,9 +136,20 @@ export default function CartScreen() {
         keyExtractor={(item) => item.productId.toString()}
         renderItem={renderCartItem}
       />
+      <Text style={{ fontWeight: 'bold', marginTop: 16 }}>
+        Total: £{cart.subtotal}
+      </Text>
+
+      <Text onPress={handleCheckout} style={{ marginTop: 20 }}>
+        Checkout
+      </Text>
     </View>
   );
+
+
 }
+
+
 
 const styles = StyleSheet.create({
   container: {

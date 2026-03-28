@@ -11,7 +11,7 @@ export default function CategoriesScreen() {
         category={item}
         onPress={() =>
           router.push({
-            pathname: '/products/[category]',
+            pathname: '/products/category/[category]',
             params: { category: item.id },
           })
         }
