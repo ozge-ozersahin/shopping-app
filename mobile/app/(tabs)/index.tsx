@@ -1,36 +1,77 @@
-import { Product } from '@/src/types/product';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View,} from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+
+import { addItemToCart, createCart } from '@/src/api/cart';
 import { getProducts } from '@/src/api/products';
 import ProductCard from '@/src/components/ProductCard';
+import { useCartContext } from '@/src/context/CartContext';
+import type { Product } from '@/src/types/product';
 
 export default function ProductsScreen() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const { cartId, setCartId, clearCart } = useCartContext();
+
   useEffect(() => {
-    async function loadProducts() {
+    async function loadInitialData() {
       try {
         setLoading(true);
         setError('');
-
-        const data = await getProducts();
-        setProducts(data);
+  
+        const productsData = await getProducts();
+        setProducts(productsData);
       } catch (err) {
+        console.log('PRODUCTS FETCH ERROR', err);
         setError('Could not load products.');
+        setLoading(false);
+        return;
+      }
+  
+      try {
+        if (!cartId) {
+          const cartData = await createCart();
+          setCartId(cartData.id);
+        }
+      } catch (err) {
+        console.log('CREATE CART ERROR', err);
+        setError('Could not create cart session.');
       } finally {
         setLoading(false);
       }
     }
+  
+    loadInitialData();
+  }, [cartId, setCartId]);
 
-    loadProducts();
-  }, []);
+  const handleAddToCart = async (productId: number, quantity: number) => {
+    try {
+      let currentCartId = cartId;
+
+      if (!currentCartId) {
+        const newCart = await createCart();
+        currentCartId = newCart.id;
+        setCartId(newCart.id);
+      }
+
+      await addItemToCart(currentCartId, productId, quantity);
+    } catch (err: any) {
+      const message = String(err?.message || '').toLowerCase();
+
+      if (message.includes('expired')) {
+        clearCart();
+        setError('Your session has expired. Please start again.');
+      } else {
+        setError('Could not add item to cart.');
+      }
+    }
+  };
 
   const renderProduct = ({ item }: { item: Product }) => {
-    return <ProductCard product={item} />;
+    return <ProductCard product={item} onAddToCart={handleAddToCart} />;
   };
-  
+
   const getProductKey = (item: Product) => item.id.toString();
 
   if (loading) {
@@ -87,6 +128,7 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     fontSize: 16,
+    textAlign: 'center',
   },
   emptyList: {
     flexGrow: 1,

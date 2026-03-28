@@ -16,3 +16,14 @@ export async function getProducts(category?: Category): Promise<Product[]> {
   const data: Product[] = await response.json();
   return data;
 }
+
+export async function getProductById(productId: number): Promise<Product> {
+  const response = await fetch(`${API_BASE_URL}/products/${productId}`);
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch product');
+  }
+
+  const data: Product = await response.json();
+  return data;
+}
