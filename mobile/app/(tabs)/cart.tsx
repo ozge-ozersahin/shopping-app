@@ -136,9 +136,11 @@ export default function CartScreen() {
         keyExtractor={(item) => item.productId.toString()}
         renderItem={renderCartItem}
       />
-      <Text style={{ fontWeight: 'bold', marginTop: 16 }}>
-        Total: £{cart.subtotal}
-      </Text>
+      <Text>Subtotal: £{cart.subtotal.toFixed(2)}</Text>
+      {cart.discount > 0 && (
+        <Text>Discount: £{cart.discount.toFixed(2)}</Text>
+      )}
+      <Text style={{ fontWeight: 'bold' }}>Total: £{cart.total.toFixed(2)}</Text>
 
       <Text onPress={handleCheckout} style={{ marginTop: 20 }}>
         Checkout

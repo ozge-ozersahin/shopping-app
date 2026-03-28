@@ -25,4 +25,6 @@ export type CartResponse = {
   subtotal: number;
   createdAt: number;
   updatedAt: number;
+  discount: number;
+  total: number;
 };

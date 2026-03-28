@@ -12,6 +12,14 @@ export class CartService {
 
   constructor(private readonly productService: ProductService) { }
 
+  private calculateDiscount(subtotal: number): number {
+    if (subtotal >= 100) {
+      return subtotal * 0.1;
+    }
+
+    return 0;
+  }
+
   createCart(): Cart {
     const now = Date.now();
 
@@ -61,7 +69,10 @@ export class CartService {
     });
 
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+
     const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
+    const discount = this.calculateDiscount(subtotal);
+    const total = subtotal - discount;
 
     return {
       id: cart.id,
@@ -70,6 +81,8 @@ export class CartService {
       subtotal,
       createdAt: cart.createdAt,
       updatedAt: cart.updatedAt,
+      discount,
+      total,
     };
   }
 
@@ -178,7 +191,7 @@ export class CartService {
       }
     }
 
-  
+
     for (const item of cart.items) {
       this.productService.reduceStock(item.productId, item.quantity);
     }
