@@ -58,4 +58,12 @@ export class CartController {
     checkout(@Param('id') id: string) {
         return this.cartService.checkout(Number(id));
     }
+
+    @Post(':id/discount')
+    applyDiscount(
+        @Param('id') id: string,
+        @Body() body: { code: string },
+    ) {
+        return this.cartService.applyDiscount(Number(id), body.code);
+    }
 }

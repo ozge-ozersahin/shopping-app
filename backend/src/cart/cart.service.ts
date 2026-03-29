@@ -5,20 +5,16 @@ import {
 } from '@nestjs/common';
 import type { Cart, CartResponse } from './cart.model';
 import { ProductService } from 'src/products/product.service';
+import { DiscountService } from 'src/discount/discount.service';
 
 @Injectable()
 export class CartService {
   private carts: Cart[] = [];
 
-  constructor(private readonly productService: ProductService) {}
-
-  private calculateDiscount(subtotal: number): number {
-    if (subtotal >= 100) {
-      return subtotal * 0.1;
-    }
-
-    return 0;
-  }
+  constructor(
+    private readonly productService: ProductService,
+    private readonly discountService: DiscountService,
+  ) {}
 
   createCart(): Cart {
     const now = Date.now();
@@ -56,6 +52,7 @@ export class CartService {
     if (this.isCartExpired(cart)) {
       this.releaseCartStock(cart);
       cart.items = [];
+      cart.discountCode = undefined;
       throw new BadRequestException('Cart has expired');
     }
 
@@ -77,7 +74,21 @@ export class CartService {
 
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
     const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
-    const discount = this.calculateDiscount(subtotal);
+
+    let discount = 0;
+
+    if (cart.discountCode) {
+      try {
+        discount = this.discountService.validateDiscountCode(
+          cart.discountCode,
+          subtotal,
+        );
+      } catch {
+        cart.discountCode = undefined;
+        discount = 0;
+      }
+    }
+
     const total = subtotal - discount;
 
     return {
@@ -90,6 +101,22 @@ export class CartService {
       createdAt: cart.createdAt,
       updatedAt: cart.updatedAt,
     };
+  }
+
+  applyDiscount(cartId: number, code: string): CartResponse {
+    const cart = this.getActiveCart(cartId);
+
+    const subtotal = cart.items.reduce((sum, item) => {
+      const product = this.productService.getProductById(item.productId);
+      return sum + product.price * item.quantity;
+    }, 0);
+
+    this.discountService.validateDiscountCode(code, subtotal);
+
+    cart.discountCode = code.trim().toUpperCase();
+    cart.updatedAt = Date.now();
+
+    return this.buildCartResponse(cart);
   }
 
   getCartById(id: number): CartResponse {
@@ -181,6 +208,7 @@ export class CartService {
     }
 
     const itemToRemove = cart.items[itemIndex];
+
     this.productService.restoreStock(
       itemToRemove.productId,
       itemToRemove.quantity,
@@ -202,6 +230,7 @@ export class CartService {
     const response = this.buildCartResponse(cart);
 
     cart.items = [];
+    cart.discountCode = undefined;
     cart.updatedAt = Date.now();
 
     return {

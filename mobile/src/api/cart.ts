@@ -113,3 +113,23 @@ export async function checkoutCart(cartId: number) {
 
   return response.json();
 }
+
+export async function applyDiscount(
+  cartId: number,
+  code: string
+): Promise<Cart> {
+  const response = await fetch(`${API_BASE_URL}/cart/${cartId}/discount`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ code }),
+  });
+
+  if (!response.ok) {
+    const message = await getErrorMessage(response, 'Failed to apply discount');
+    throw new Error(message);
+  }
+
+  return response.json();
+}

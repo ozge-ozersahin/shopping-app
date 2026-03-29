@@ -8,6 +8,7 @@ export type Cart = {
   items: CartItem[];
   createdAt: number;
   updatedAt: number;
+  discountCode?: string;
 };
 
 export type CartSummaryItem = {
