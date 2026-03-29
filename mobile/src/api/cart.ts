@@ -1,6 +1,12 @@
 import { API_BASE_URL } from '../constants/config';
 import type { Cart } from '../types/cart';
 
+type CheckoutResponse = {
+  success: boolean;
+  message: string;
+  order: Cart;
+};
+
 async function getErrorMessage(response: Response, fallback: string) {
   try {
     const errorData = await response.json();
@@ -59,7 +65,6 @@ export async function addItemToCart(
 
   const data: Cart = await response.json();
   return data;
-
 }
 
 export async function updateCartItem(
@@ -101,7 +106,7 @@ export async function removeCartItem(
   return data;
 }
 
-export async function checkoutCart(cartId: number) {
+export async function checkoutCart(cartId: number): Promise<CheckoutResponse> {
   const response = await fetch(`${API_BASE_URL}/cart/${cartId}/checkout`, {
     method: 'POST',
   });
@@ -111,7 +116,8 @@ export async function checkoutCart(cartId: number) {
     throw new Error(message);
   }
 
-  return response.json();
+  const data: CheckoutResponse = await response.json();
+  return data;
 }
 
 export async function applyDiscount(
@@ -131,5 +137,6 @@ export async function applyDiscount(
     throw new Error(message);
   }
 
-  return response.json();
+  const data: Cart = await response.json();
+  return data;
 }

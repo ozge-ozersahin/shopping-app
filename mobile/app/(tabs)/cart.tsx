@@ -8,7 +8,7 @@ import {
   TextInput,
   Pressable,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, router } from 'expo-router';
 
 import { getCart } from '@/src/api/cart';
 import { useCartContext } from '@/src/context/CartContext';
@@ -27,7 +27,7 @@ export default function CartScreen() {
   const [discountCode, setDiscountCode] = useState('');
   const [discountApplied, setDiscountApplied] = useState(false);
 
-  const { cartId, clearCart } = useCartContext();
+  const { cartId, clearCart, setLastOrder } = useCartContext();
 
   useFocusEffect(
     useCallback(() => {
@@ -94,13 +94,14 @@ export default function CartScreen() {
     if (!cartId) return;
 
     try {
-      await checkoutCart(cartId);
+      const result = await checkoutCart(cartId);
+      setLastOrder(result.order);
       clearCart();
       setCart(null);
       setError('');
       setDiscountApplied(false);
       setDiscountCode('');
-      alert('Checkout successful');
+      router.push('/order-summary');
     } catch (err: any) {
       setError(err.message);
     }
@@ -124,12 +125,16 @@ export default function CartScreen() {
     return (
       <View style={styles.itemCard}>
         <Text style={styles.itemText}>{item.name}</Text>
-        <Text style={styles.itemText}>£{item.price}</Text>
+        <Text style={styles.itemText}>£{item.price.toFixed(2)}</Text>
         <Text style={styles.itemText}>Qty: {item.quantity}</Text>
 
         <View style={styles.itemActions}>
-          <Text onPress={() => handleUpdate(item.productId, item.quantity - 1)}>-</Text>
-          <Text onPress={() => handleUpdate(item.productId, item.quantity + 1)}>+</Text>
+          <Text onPress={() => handleUpdate(item.productId, item.quantity - 1)}>
+            -
+          </Text>
+          <Text onPress={() => handleUpdate(item.productId, item.quantity + 1)}>
+            +
+          </Text>
           <Text onPress={() => handleRemove(item.productId)}>Remove</Text>
         </View>
       </View>
@@ -173,11 +178,13 @@ export default function CartScreen() {
         keyExtractor={(item) => item.productId.toString()}
         renderItem={renderCartItem}
       />
+
       <View style={styles.discountBanner}>
         <Text style={styles.discountBannerText}>
           Apply SAVE10 for 10% off orders over £100
         </Text>
       </View>
+
       <View style={styles.discountSection}>
         <Text>Discount code</Text>
 
@@ -269,8 +276,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
   },
-  discountSection: {
+  discountBanner: {
+    backgroundColor: '#f2f8ff',
+    borderWidth: 1,
+    borderColor: '#cfe3ff',
+    padding: 12,
+    borderRadius: 8,
     marginTop: 16,
+    marginBottom: 12,
+  },
+  discountBannerText: {
+    color: '#1d4ed8',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  discountSection: {
+    marginTop: 4,
     marginBottom: 16,
   },
   input: {
@@ -306,20 +327,5 @@ const styles = StyleSheet.create({
   },
   checkoutText: {
     marginTop: 20,
-  },
-  discountBanner: {
-    backgroundColor: '#f2f8ff',
-    borderWidth: 1,
-    borderColor: '#cfe3ff',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 16,
-    marginBottom: 12,
-  },
-  
-  discountBannerText: {
-    color: '#1d4ed8',
-    fontWeight: '500',
-    textAlign: 'center',
   },
 });
