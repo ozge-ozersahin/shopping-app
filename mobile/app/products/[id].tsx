@@ -13,6 +13,7 @@ import { addItemToCart, createCart } from '@/src/api/cart';
 import { getProductById } from '@/src/api/products';
 import type { Product } from '@/src/types/product';
 import { useCartContext } from '@/src/context/CartContext';
+const [addPressed, setAddPressed] = useState(false);
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
@@ -68,6 +69,7 @@ export default function ProductDetailScreen() {
       }
 
       await addItemToCart(currentCartId, product.id, quantity);
+      alert("Product added to cart")
       setQuantity(1);
     } catch (err: any) {
       const message = String(err?.message || '').toLowerCase();
@@ -127,7 +129,12 @@ export default function ProductDetailScreen() {
         </Pressable>
       </View>
 
-      <Pressable style={styles.addButton} onPress={handleAddToCart}>
+      <Pressable
+        style={[styles.addButton, addPressed && styles.addButtonPressed]}
+        onPressIn={() => setAddPressed(true)}
+        onPressOut={() => setAddPressed(false)}
+        onPress={handleAddToCart}
+      >
         <Text style={styles.addText}>Add to cart</Text>
       </Pressable>
     </View>
@@ -160,6 +167,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
+    opacity: 0.7,
   },
   addText: {
     color: '#fff',

@@ -14,17 +14,22 @@ export default function ProductCard({
   onAddToCart,
 }: ProductCardProps) {
   const [quantity, setQuantity] = useState(1);
+  const [addedMessage, setAddedMessage] = useState(false);
   const router = useRouter();
+
+  const goToDetail = () => {
+    router.push(`/products/${product.id}`);
+  };
 
   const handleDecrease = () => {
     if (quantity > 1) {
-      setQuantity(quantity - 1);
+      setQuantity((prev) => prev - 1);
     }
   };
 
   const handleIncrease = () => {
     if (quantity < product.stock) {
-      setQuantity(quantity + 1);
+      setQuantity((prev) => prev + 1);
     }
   };
 
@@ -32,47 +37,79 @@ export default function ProductCard({
     if (onAddToCart) {
       onAddToCart(product.id, quantity);
       setQuantity(1);
+      setAddedMessage(true);
+
+      setTimeout(() => {
+        setAddedMessage(false);
+      }, 2000);
     }
   };
 
   return (
     <View style={styles.card}>
-      <Image
-        source={{
-          uri:
-            product.imageUrl ||
-            'https://via.placeholder.com/150x100.png?text=Product',
-        }}
-        style={styles.image}
-      />
+      <Pressable
+        style={({ pressed }) => [
+          styles.infoSection,
+          pressed && styles.infoSectionPressed,
+        ]}
+        onPress={goToDetail}
+      >
+        <Image
+          source={{
+            uri:
+              product.imageUrl ||
+              'https://via.placeholder.com/150x100.png?text=Product',
+          }}
+          style={styles.image}
+        />
 
-      <Pressable onPress={() => router.push(`/products/${product.id}`)}>
         <Text style={styles.productName}>{product.name}</Text>
+        <Text style={styles.price}>£{product.price.toFixed(2)}</Text>
+        <Text style={styles.category}>{product.category}</Text>
+        <Text style={styles.stockText}>Stock: {product.stock}</Text>
       </Pressable>
-
-      <Text style={styles.price}>£{product.price}</Text>
-      <Text style={styles.category}>{product.category}</Text>
-      <Text style={styles.stockText}>Stock: {product.stock}</Text>
 
       {product.stock === 0 ? (
         <Text style={styles.outOfStock}>Out of stock</Text>
       ) : (
         <View style={styles.actionsContainer}>
           <View style={styles.quantityContainer}>
-            <Pressable style={styles.quantityButton} onPress={handleDecrease}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.quantityButton,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={handleDecrease}
+            >
               <Text style={styles.quantityButtonText}>-</Text>
             </Pressable>
 
             <Text style={styles.quantityText}>{quantity}</Text>
 
-            <Pressable style={styles.quantityButton} onPress={handleIncrease}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.quantityButton,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={handleIncrease}
+            >
               <Text style={styles.quantityButtonText}>+</Text>
             </Pressable>
           </View>
 
-          <Pressable style={styles.addButton} onPress={handleAddToCart}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.addButton,
+              pressed && styles.buttonPressed,
+            ]}
+            onPress={handleAddToCart}
+          >
             <Text style={styles.addButtonText}>Add to cart</Text>
           </Pressable>
+
+          {addedMessage && (
+            <Text style={styles.successText}>Added to cart.</Text>
+          )}
         </View>
       )}
     </View>
@@ -87,6 +124,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 12,
     backgroundColor: '#fff',
+  },
+  infoSection: {
+    borderRadius: 8,
+  },
+  infoSectionPressed: {
+    opacity: 0.92,
   },
   image: {
     width: '100%',
@@ -157,5 +200,14 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: '#fff',
     fontWeight: '600',
+  },
+  buttonPressed: {
+    opacity: 0.8,
+  },
+  successText: {
+    color: 'green',
+    marginTop: 8,
+    textAlign: 'center',
+    fontWeight: '500',
   },
 });
