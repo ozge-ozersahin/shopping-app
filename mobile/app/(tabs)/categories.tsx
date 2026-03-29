@@ -19,8 +19,8 @@ export default function CategoriesScreen() {
     );
   };
 
+  // Use category id as a stable key for the list
   const getCategoryKey = (item: CategoryOption) => item.id;
-  
 
   return (
     <View style={styles.container}>

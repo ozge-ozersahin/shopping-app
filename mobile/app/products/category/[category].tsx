@@ -30,6 +30,7 @@ export default function CategoryProductsScreen() {
         setLoading(true);
         setError('');
 
+        // Load products for the selected category
         const data = await getProducts(category as Category);
         setProducts(data);
       } catch (err) {
@@ -48,6 +49,7 @@ export default function CategoryProductsScreen() {
     try {
       let currentCartId = cartId;
 
+      // Create a cart session first if one does not already exist
       if (!currentCartId) {
         const cartData = await createCart();
         currentCartId = cartData.id;
@@ -56,6 +58,7 @@ export default function CategoryProductsScreen() {
 
       await addItemToCart(currentCartId, productId, quantity);
 
+      // Refresh category products so stock values stay up to date
       const updatedProducts = await getProducts(category as Category);
       setProducts(updatedProducts);
 
@@ -78,8 +81,10 @@ export default function CategoryProductsScreen() {
     return <ProductCard product={item} onAddToCart={handleAddToCart} />;
   };
 
+  // Use product id as a stable key for the list
   const getProductKey = (item: Product) => item.id.toString();
 
+  // Full-page loading state while category products are being fetched
   if (loading) {
     return (
       <View style={styles.centerContent}>
@@ -89,7 +94,8 @@ export default function CategoryProductsScreen() {
     );
   }
 
-  if (error && products.length === 0) {
+  // Full-page error only when category products could not be loaded at all
+  if (!loading && error && products.length === 0) {
     return (
       <View style={styles.centerContent}>
         <Text style={styles.errorText}>{error}</Text>
@@ -104,15 +110,18 @@ export default function CategoryProductsScreen() {
       <View style={styles.container}>
         <Text style={styles.title}>{category} products</Text>
 
+        {/* Keep the list visible and show action errors inline */}
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <FlatList
           data={products}
           keyExtractor={getProductKey}
           renderItem={renderProduct}
-          ListEmptyComponent={<Text>No products found for this category.</Text>}
+          ListEmptyComponent={
+            <Text style={styles.message}>No products found for this category.</Text>
+          }
           contentContainerStyle={
-            products.length === 0 ? styles.emptyList : { paddingBottom: 24 }
+            products.length === 0 ? styles.emptyList : styles.listContent
           }
         />
       </View>
@@ -139,6 +148,7 @@ const styles = StyleSheet.create({
   },
   message: {
     marginTop: 8,
+    textAlign: 'center',
   },
   errorText: {
     color: 'red',
@@ -149,5 +159,8 @@ const styles = StyleSheet.create({
   emptyList: {
     flexGrow: 1,
     justifyContent: 'center',
+  },
+  listContent: {
+    paddingBottom: 24,
   },
 });

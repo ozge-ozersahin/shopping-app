@@ -11,6 +11,7 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   return (
+    // Provide cart state to the whole app
     <CartProvider>
       <ThemeProvider value={DefaultTheme}>
         <Stack>
@@ -28,6 +29,7 @@ export default function RootLayout() {
             options={{ title: 'Order Summary' }}
           />
         </Stack>
+
         <StatusBar style="auto" />
       </ThemeProvider>
     </CartProvider>

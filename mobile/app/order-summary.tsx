@@ -4,6 +4,7 @@ import { useCartContext } from '@/src/context/CartContext';
 export default function OrderSummaryScreen() {
   const { lastOrder } = useCartContext();
 
+  // Show fallback state if the user opens this screen without completing checkout
   if (!lastOrder) {
     return (
       <View style={styles.centerContent}>
@@ -16,6 +17,7 @@ export default function OrderSummaryScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Order Summary</Text>
+      <Text style={styles.successText}>Your order was placed successfully.</Text>
 
       <FlatList
         data={lastOrder.items}
@@ -32,6 +34,7 @@ export default function OrderSummaryScreen() {
         )}
       />
 
+      {/* Show final order totals after checkout */}
       <View style={styles.summaryBox}>
         <Text style={styles.summaryText}>
           Subtotal: £{lastOrder.subtotal.toFixed(2)}
@@ -65,7 +68,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '600',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   emptyText: {
     fontSize: 16,
@@ -98,5 +101,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     marginTop: 8,
+  },
+  successText: {
+    color: 'green',
+    marginBottom: 12,
+    fontWeight: '500',
   },
 });

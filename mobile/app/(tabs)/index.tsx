@@ -1,13 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { useFocusEffect } from 'expo-router';
 
 import { addItemToCart, createCart } from '@/src/api/cart';
 import { getProducts } from '@/src/api/products';
 import ProductCard from '@/src/components/ProductCard';
 import { useCartContext } from '@/src/context/CartContext';
 import type { Product } from '@/src/types/product';
-import { useFocusEffect } from 'expo-router';
-import { useCallback } from 'react';
 
 export default function ProductsScreen() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -22,29 +27,29 @@ export default function ProductsScreen() {
         try {
           setLoading(true);
           setError('');
-  
+
+          // Load the latest product list whenever the screen becomes active
           const productsData = await getProducts();
           setProducts(productsData);
-        } catch (err) {
-          console.log('PRODUCTS FETCH ERROR', err);
-          setError('Could not load products.');
-          setLoading(false);
-          return;
-        }
-  
-        try {
+
+          // Create a cart session if the user does not already have one
           if (!cartId) {
             const cartData = await createCart();
             setCartId(cartData.id);
           }
-        } catch (err) {
-          console.log('CREATE CART ERROR', err);
-          setError('Could not create cart session.');
+        } catch (err: any) {
+          const message = String(err?.message || '').toLowerCase();
+
+          if (message.includes('cart')) {
+            setError('Could not create cart session.');
+          } else {
+            setError('Could not load products.');
+          }
         } finally {
           setLoading(false);
         }
       }
-  
+
       loadInitialData();
     }, [cartId, setCartId])
   );
@@ -52,22 +57,24 @@ export default function ProductsScreen() {
   const handleAddToCart = async (productId: number, quantity: number) => {
     try {
       let currentCartId = cartId;
-  
+
+      // If there is no active cart, create one before adding the item
       if (!currentCartId) {
         const newCart = await createCart();
         currentCartId = newCart.id;
         setCartId(newCart.id);
       }
-  
+
       await addItemToCart(currentCartId, productId, quantity);
-  
+
+      // Refresh products so stock values stay up to date in the UI
       const updatedProducts = await getProducts();
       setProducts(updatedProducts);
-  
+
       setError('');
     } catch (err: any) {
       const message = String(err?.message || '').toLowerCase();
-  
+
       if (message.includes('expired')) {
         clearCart();
         setError('Your session has expired. Please start again.');
@@ -83,8 +90,10 @@ export default function ProductsScreen() {
     return <ProductCard product={item} onAddToCart={handleAddToCart} />;
   };
 
+  // Use product id as a stable key for the list
   const getProductKey = (item: Product) => item.id.toString();
 
+  // Full-page loading state while products are being fetched
   if (loading) {
     return (
       <View style={styles.centerContent}>
@@ -94,7 +103,8 @@ export default function ProductsScreen() {
     );
   }
 
-  if (error) {
+  // Full-page error only when products could not be loaded at all
+  if (!loading && error && products.length === 0) {
     return (
       <View style={styles.centerContent}>
         <Text style={styles.errorText}>{error}</Text>
@@ -106,11 +116,14 @@ export default function ProductsScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Products</Text>
 
+      {/* Keep products visible and show inline feedback for cart/add errors */}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
       <FlatList
         data={products}
         keyExtractor={getProductKey}
         renderItem={renderProduct}
-        ListEmptyComponent={<Text>No products found.</Text>}
+        ListEmptyComponent={<Text style={styles.message}>No products found.</Text>}
         contentContainerStyle={products.length === 0 ? styles.emptyList : undefined}
       />
     </View>
@@ -135,11 +148,13 @@ const styles = StyleSheet.create({
   },
   message: {
     marginTop: 8,
+    textAlign: 'center',
   },
   errorText: {
     color: 'red',
     fontSize: 16,
     textAlign: 'center',
+    marginBottom: 12,
   },
   emptyList: {
     flexGrow: 1,

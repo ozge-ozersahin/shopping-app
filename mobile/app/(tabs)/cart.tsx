@@ -36,16 +36,19 @@ export default function CartScreen() {
           setLoading(true);
           setError('');
 
+          // If there is no active cart yet, show empty cart state
           if (!cartId) {
             setCart(null);
             return;
           }
 
+          // Load the latest cart data whenever this screen becomes active
           const cartData = await getCart(cartId);
           setCart(cartData);
         } catch (err: any) {
           const message = String(err?.message || '').toLowerCase();
 
+            // If the backend says the cart expired, clear local cart state too
           if (message.includes('expired')) {
             clearCart();
             setCart(null);
@@ -63,12 +66,15 @@ export default function CartScreen() {
   );
 
   const handleUpdate = async (productId: number, quantity: number) => {
+    // Prevent invalid quantity updates
     if (!cartId || quantity < 1) return;
 
     try {
       const updated = await updateCartItem(cartId, productId, quantity);
       setCart(updated);
       setError('');
+
+      // Reset discount UI after cart changes
       setDiscountApplied(false);
       setDiscountCode('');
     } catch (err: any) {
@@ -83,6 +89,8 @@ export default function CartScreen() {
       const updated = await removeCartItem(cartId, productId);
       setCart(updated);
       setError('');
+
+      // Reset discount UI after cart changes
       setDiscountApplied(false);
       setDiscountCode('');
     } catch (err: any) {
@@ -95,7 +103,11 @@ export default function CartScreen() {
 
     try {
       const result = await checkoutCart(cartId);
+
+      // Store the completed order so it can be shown on the summary screen
       setLastOrder(result.order);
+
+       // Clear active cart after successful checkout
       clearCart();
       setCart(null);
       setError('');
@@ -141,6 +153,7 @@ export default function CartScreen() {
     );
   };
 
+  // Show loading state while cart data is being fetched
   if (loading) {
     return (
       <View style={styles.centerContent}>
@@ -150,6 +163,7 @@ export default function CartScreen() {
     );
   }
 
+  // Show full-page error only when there is no cart to display
   if (error && !cart) {
     return (
       <View style={styles.centerContent}>
@@ -158,6 +172,7 @@ export default function CartScreen() {
     );
   }
 
+  // Show empty state when cart does not exist or has no items
   if (!cart || cart.items.length === 0) {
     return (
       <View style={styles.centerContent}>
@@ -184,7 +199,7 @@ export default function CartScreen() {
           Apply SAVE10 for 10% off orders over £100
         </Text>
       </View>
-
+      {/* Simple hint to make the seeded discount easier to discover */}
       <View style={styles.discountSection}>
         <Text>Discount code</Text>
 

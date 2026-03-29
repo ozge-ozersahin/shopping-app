@@ -2,6 +2,16 @@ import { API_BASE_URL } from '../constants/config';
 import type { Category } from '../types/category';
 import type { Product } from '../types/product';
 
+// Try to read a useful error message from the API response
+async function getErrorMessage(response: Response, fallback: string) {
+  try {
+    const errorData = await response.json();
+    return errorData.message || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export async function getProducts(category?: Category): Promise<Product[]> {
   const url = category
     ? `${API_BASE_URL}/products?category=${category}`
@@ -10,7 +20,8 @@ export async function getProducts(category?: Category): Promise<Product[]> {
   const response = await fetch(url);
 
   if (!response.ok) {
-    throw new Error('Failed to fetch products');
+    const message = await getErrorMessage(response, 'Failed to fetch products');
+    throw new Error(message);
   }
 
   const data: Product[] = await response.json();
@@ -21,7 +32,8 @@ export async function getProductById(productId: number): Promise<Product> {
   const response = await fetch(`${API_BASE_URL}/products/${productId}`);
 
   if (!response.ok) {
-    throw new Error('Failed to fetch product');
+    const message = await getErrorMessage(response, 'Failed to fetch product');
+    throw new Error(message);
   }
 
   const data: Product = await response.json();
