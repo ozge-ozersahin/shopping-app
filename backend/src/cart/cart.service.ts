@@ -11,7 +11,7 @@ import { DiscountService } from '../discount/discount.service';
 export class CartService {
   // In-memory cart storage
   private carts: Cart[] = [];
-  private nextCardId = 1;
+  private nextCartId = 1;
 
   constructor(
     private readonly productService: ProductService,
@@ -23,7 +23,7 @@ export class CartService {
     const now = Date.now();
 
     const newCart: Cart = {
-      id: this.nextCardId++,
+      id: this.nextCartId++,
       items: [],
       createdAt: now,
       updatedAt: now,
