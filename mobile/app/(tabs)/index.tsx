@@ -54,11 +54,10 @@ export default function ProductsScreen() {
     }, [cartId, setCartId])
   );
 
-  const handleAddToCart = async (productId: number, quantity: number) => {
+  const handleAddToCart = async (productId: number, quantity: number): Promise<boolean> => {
     try {
       let currentCartId = cartId;
 
-      // If there is no active cart, create one before adding the item
       if (!currentCartId) {
         const newCart = await createCart();
         currentCartId = newCart.id;
@@ -67,11 +66,11 @@ export default function ProductsScreen() {
 
       await addItemToCart(currentCartId, productId, quantity);
 
-      // Refresh products so stock values stay up to date in the UI
       const updatedProducts = await getProducts();
       setProducts(updatedProducts);
-
       setError('');
+
+      return true; // ← success
     } catch (err: any) {
       const message = String(err?.message || '').toLowerCase();
 
@@ -83,6 +82,8 @@ export default function ProductsScreen() {
       } else {
         setError('Could not add item to cart.');
       }
+
+      return false; // ← failure
     }
   };
 

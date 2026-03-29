@@ -45,11 +45,10 @@ export default function CategoryProductsScreen() {
     }
   }, [category]);
 
-  const handleAddToCart = async (productId: number, quantity: number) => {
+  const handleAddToCart = async (productId: number, quantity: number): Promise<boolean> => {
     try {
       let currentCartId = cartId;
 
-      // Create a cart session first if one does not already exist
       if (!currentCartId) {
         const cartData = await createCart();
         currentCartId = cartData.id;
@@ -58,11 +57,11 @@ export default function CategoryProductsScreen() {
 
       await addItemToCart(currentCartId, productId, quantity);
 
-      // Refresh category products so stock values stay up to date
       const updatedProducts = await getProducts(category as Category);
       setProducts(updatedProducts);
 
       setError('');
+      return true; 
     } catch (err: any) {
       const message = String(err?.message || '').toLowerCase();
 
@@ -74,6 +73,8 @@ export default function CategoryProductsScreen() {
       } else {
         setError('Could not add item to cart.');
       }
+
+      return false; 
     }
   };
 

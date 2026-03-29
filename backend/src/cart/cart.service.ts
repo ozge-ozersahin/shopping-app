@@ -4,25 +4,26 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { Cart, CartResponse } from './cart.model';
-import { ProductService } from 'src/products/product.service';
-import { DiscountService } from 'src/discount/discount.service';
+import { ProductService } from '../products/product.service';
+import { DiscountService } from '../discount/discount.service';
 
 @Injectable()
 export class CartService {
-   // In-memory cart storage
+  // In-memory cart storage
   private carts: Cart[] = [];
+  private nextCardId = 1;
 
   constructor(
     private readonly productService: ProductService,
     private readonly discountService: DiscountService,
-  ) {}
-  
+  ) { }
+
   // Creates a new empty cart session
   createCart(): Cart {
     const now = Date.now();
 
     const newCart: Cart = {
-      id: this.carts.length + 1,
+      id: this.nextCardId++,
       items: [],
       createdAt: now,
       updatedAt: now,
@@ -127,7 +128,7 @@ export class CartService {
     return this.buildCartResponse(cart);
   }
 
-   // Returns a cart by id in API response format
+  // Returns a cart by id in API response format
   getCartById(id: number): CartResponse {
     const cart = this.getActiveCart(id);
     return this.buildCartResponse(cart);

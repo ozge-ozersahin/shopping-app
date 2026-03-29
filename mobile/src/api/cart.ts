@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '../constants/config';
 import type { Cart } from '../types/cart';
+import { getErrorMessage } from '../utils/api';
 
 type CheckoutResponse = {
   success: boolean;
@@ -7,15 +8,6 @@ type CheckoutResponse = {
   order: Cart;
 };
 
-// Try to read a useful error message from the API response
-async function getErrorMessage(response: Response, fallback: string) {
-  try {
-    const errorData = await response.json();
-    return errorData.message || fallback;
-  } catch {
-    return fallback;
-  }
-}
 
 export async function createCart(): Promise<Cart> {
   const response = await fetch(`${API_BASE_URL}/cart`, {

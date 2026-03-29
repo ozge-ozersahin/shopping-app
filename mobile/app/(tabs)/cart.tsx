@@ -48,7 +48,7 @@ export default function CartScreen() {
         } catch (err: any) {
           const message = String(err?.message || '').toLowerCase();
 
-            // If the backend says the cart expired, clear local cart state too
+          // If the backend says the cart expired, clear local cart state too
           if (message.includes('expired')) {
             clearCart();
             setCart(null);
@@ -107,7 +107,7 @@ export default function CartScreen() {
       // Store the completed order so it can be shown on the summary screen
       setLastOrder(result.order);
 
-       // Clear active cart after successful checkout
+      // Clear active cart after successful checkout
       clearCart();
       setCart(null);
       setError('');
@@ -141,13 +141,26 @@ export default function CartScreen() {
         <Text style={styles.itemText}>Qty: {item.quantity}</Text>
 
         <View style={styles.itemActions}>
-          <Text onPress={() => handleUpdate(item.productId, item.quantity - 1)}>
-            -
-          </Text>
-          <Text onPress={() => handleUpdate(item.productId, item.quantity + 1)}>
-            +
-          </Text>
-          <Text onPress={() => handleRemove(item.productId)}>Remove</Text>
+          <Pressable
+            style={({ pressed }) => [styles.qButton, pressed && styles.qButtonPressed]}
+            onPress={() => handleUpdate(item.productId, item.quantity - 1)}
+          >
+            <Text style={styles.qButtonText}>-</Text>
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [styles.qButton, pressed && styles.qButtonPressed]}
+            onPress={() => handleUpdate(item.productId, item.quantity + 1)}
+          >
+            <Text style={styles.qButtonText}>+</Text>
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [styles.removeButton, pressed && styles.qButtonPressed]}
+            onPress={() => handleRemove(item.productId)}
+          >
+            <Text style={styles.removeButtonText}>Remove</Text>
+          </Pressable>
         </View>
       </View>
     );
@@ -236,9 +249,12 @@ export default function CartScreen() {
 
       <Text style={styles.totalText}>Total: £{cart.total.toFixed(2)}</Text>
 
-      <Text onPress={handleCheckout} style={styles.checkoutText}>
-        Checkout
-      </Text>
+      <Pressable
+        style={({ pressed }) => [styles.checkoutButton, pressed && styles.checkoutButtonPressed]}
+        onPress={handleCheckout}
+      >
+        <Text style={styles.checkoutButtonText}>Checkout</Text>
+      </Pressable>
     </View>
   );
 }
@@ -342,5 +358,47 @@ const styles = StyleSheet.create({
   },
   checkoutText: {
     marginTop: 20,
+  },
+  qButton: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 6,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  qButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  qButtonPressed: {
+    opacity: 0.6,
+  },
+  removeButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#ff4444',
+  },
+  removeButtonText: {
+    color: '#ff4444',
+    fontWeight: '500',
+  },
+  checkoutButton: {
+    backgroundColor: '#111',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  checkoutButtonPressed: {
+    opacity: 0.8,
+  },
+  checkoutButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });

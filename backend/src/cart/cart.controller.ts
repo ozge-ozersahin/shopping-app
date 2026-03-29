@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { CartService } from './cart.service';
 import type { Cart, CartResponse } from './cart.model';
-import type { AddItemDto } from './add-item.dto';
+import { AddItemDto } from './add-item.dto';
 import { UpdateItemDto } from './update-item.dto';
 
 @Controller('cart')

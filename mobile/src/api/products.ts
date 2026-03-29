@@ -1,16 +1,9 @@
 import { API_BASE_URL } from '../constants/config';
 import type { Category } from '../types/category';
 import type { Product } from '../types/product';
+import { getErrorMessage } from '../utils/api';
 
-// Try to read a useful error message from the API response
-async function getErrorMessage(response: Response, fallback: string) {
-  try {
-    const errorData = await response.json();
-    return errorData.message || fallback;
-  } catch {
-    return fallback;
-  }
-}
+
 
 export async function getProducts(category?: Category): Promise<Product[]> {
   const url = category

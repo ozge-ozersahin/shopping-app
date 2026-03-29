@@ -6,7 +6,7 @@ import type { Product } from '../types/product';
 
 type ProductCardProps = {
   product: Product;
-  onAddToCart?: (productId: number, quantity: number) => void;
+  onAddToCart?: (productId: number, quantity: number) => Promise<boolean>;
 };
 
 export default function ProductCard({
@@ -33,15 +33,14 @@ export default function ProductCard({
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (onAddToCart) {
-      onAddToCart(product.id, quantity);
-      setQuantity(1);
-      setAddedMessage(true);
-
-      setTimeout(() => {
-        setAddedMessage(false);
-      }, 2000);
+      const success = await onAddToCart(product.id, quantity);
+      if (success) {
+        setQuantity(1);
+        setAddedMessage(true);
+        setTimeout(() => setAddedMessage(false), 2000);
+      }
     }
   };
 

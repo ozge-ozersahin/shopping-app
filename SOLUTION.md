@@ -1,21 +1,53 @@
-<h1>Shopping App</h1>
+# Shopping App
 
-This project is a full-stack shopping application.
+A full-stack shopping application built with NestJS (backend) and React Native with Expo (mobile).
 
-<strong>Backend:</strong> NestJS (Backend-for-Frontend architecture)</br>
-<strong>Frontend:</strong> React Native (Expo + TypeScript)
+---
 
-The system supports a complete shopping flow including product browsing, cart management, discount handling, and checkout.
-## Environment
+## Tech Stack
 
-- Node.js: v22.11.0
-- npm: v10.9.0
+| Layer | Technology |
+|---|---|
+| Backend | NestJS · TypeScript |
+| Mobile | React Native · Expo · TypeScript |
+| Testing | Jest · Supertest |
 
-<h1> Backend (NESTJS) </h1>
+**Environment requirements**
+- Node.js v22.11.0
+- npm v10.9.0
 
-This backend is implemented using NestJS as a Backend for Frontend (BFF) to support the mobile shopping application.
+---
 
-### How to run the backend
+## Project Structure
+
+```
+shopping-app/
+├── backend/                  # NestJS BFF API
+│   ├── src/
+│   │   ├── cart/             # Cart management (CRUD, checkout, discount)
+│   │   ├── products/         # Product catalogue and stock management
+│   │   ├── discount/         # Discount code validation
+│   │   └── main.ts           # App entry point
+│   └── test/
+│       ├── cart.service.spec.ts   # Unit tests for cart logic
+│       └── app.e2e-spec.ts        # End-to-end API tests
+│
+└── mobile/                   # React Native (Expo) app
+    ├── app/
+    │   ├── (tabs)/           # Tab screens: products, categories, cart
+    │   ├── products/         # Product detail and category views
+    │   └── order-summary.tsx # Post-checkout summary
+    └── src/
+        ├── api/              # Fetch wrappers for backend communication
+        ├── components/       # Shared UI components (ProductCard, etc.)
+        ├── context/          # CartContext for global cart state
+        ├── constants/        # API config
+        └── types/            # Shared TypeScript types
+```
+
+---
+
+## Running the Backend
 
 ```bash
 cd backend
@@ -23,295 +55,146 @@ npm install
 npm run start
 ```
 
-## By default, the backend runs locally on:
+Runs on `http://localhost:3000`
 
-http://localhost:3000
+---
 
-## Backend features implemented
+## Running the Mobile App
 
-The backend supports the main shopping flow required for the exercise:
-View the product catalogue
-Retrieve a single product by id
-Create a cart
-Add items to a cart
-Update item quantities
-Remove items from a cart
-Apply a discount code
-Checkout a cart
-Cart and stock behaviour
-
-## Cart and stock behaviour
-The cart is managed fully in memory.
-
-When a product is added to the cart, stock is reserved immediately by reducing the available stock in the product catalogue.
-
-Stock is restored when:
-
-an item is removed from the cart
-the quantity of an item is reduced
-the cart expires after 2 minutes of inactivity
-
-On successful checkout, the cart is cleared and the reserved stock is treated as purchased.
-
-## Discount logic
-The backend currently supports one discount code:
-
-SAVE10 — gives 10% off
-the discount is only valid when the cart subtotal is at least £100
-
-Discount codes are validated in the backend before being applied to the cart.
-
-## API structure
-
-The backend is organised into separate modules/services for:
-
-products
-cart
-discount
-
-This keeps the product catalogue, cart logic, and discount rules separated and easier to maintain.
-
-
-## Running backend tests
-
-```bash
-cd backend
-npm run test
-```
-
-The backend test suite currently focuses on the cart service and covers key business logic such as:
-
-cart creation
-getting a cart by id
-adding items to a cart
-updating item quantities
-removing items from a cart
-applying a discount code
-successful checkout
-checkout failure for empty carts
-cart expiry after inactivity
-restoring reserved stock when a cart expires
-
-<h1>Frontend (React Native + TypeScript)</h1> 
-
-The frontend is a React Native application built with Expo. It provides a simple shopping experience where users can browse products, manage a cart, and complete checkout.
-
-The app communicates with the NestJS BFF API and reflects real-time stock changes and cart behaviour.
-
-## How to Run the App
 ```bash
 cd mobile
 npm install
 npm start
 ```
 
-Then run on:
+Then press the key for your target platform:
+
+| Platform | Command | Notes |
+|---|---|---|
+| iOS simulator | `i` | Requires Xcode |
+| Android emulator | `a` | Requires Android Studio |
+| Web | `w` | Opens in browser |
+
+Or use the platform-specific scripts:
+
 ```bash
-iOS simulator (i)
-Android emulator (a)
-or web (w)
+npm run ios      # iOS simulator
+npm run android  # Android emulator (uses 10.0.2.2 to reach local backend)
+npm run web      # Web browser
 ```
-Make sure the backend is running locally and the API base URL is correctly configured.
 
-## Features Implemented
+> **Android note:** The Android emulator cannot reach `localhost` directly. Before running on Android, set up the required port forwards:
+> ```bash
+> adb reverse tcp:3000 tcp:3000   # backend
+> adb reverse tcp:8083 tcp:8083   # Metro bundler
+> ```
+> Then `npm run android` is pre-configured to use `http://10.0.2.2:3000` to reach the local backend.
 
-## Product Listing
+---
 
-Displays all products with:
-<ul>
-    <li>name</li>
-    <li>price</li>
-    <li>category</li>
-    <li>stock availability</li>
-</ul> 
-Users can:
-<ul>
-    <li>navigate to product detail</li> 
-    <li>select quantity</li> 
-    <li>add items to cart</li>
-</ul>
-   
+## Running Tests
 
-## Product Detail 
-
-Shows full product information:
-<ul>
-    <li>image</li>
-    <li>description</li>
-    <li>price</li>
-    <li>stock</li>
-    <li>Quantity selector with stock limit</li>
-    <li>Add to cart functionality with success feedback </li>
-</ul>
-
-## Categories (Additional Feature)
-Users can browse products by category
-Improves navigation and product discovery
-Not required but added to enhance UX
-
-## Cart
-
-Displays:
-<ul>
-    <li>cart items</li>
-    <li>quantities </li>
-    <li>subtotal/ discount / total</li>
-</ul>
-
-Users can:
-<ul>
-    <li>increase/decrease quantity</li>
-    <li>remove items</li>
-    <li>apply discount codes</li>
-    <li>checkout</li>
-</ul>
-    
-
-## Checkout 
-
-Calls backend checkout endpoint
-On success:
-<ul>
-    <li>navigates to Order Summary</li>
-    <li>clears cart</li>
-</ul>
-
-On failure:
-<ul>
-    <li>shows clear error message (e.g. insufficient stock)</li>
-</ul>
-
-## Order Summary 
-
-Displays:
-<ul>
-    <li>purchased items</li>
-    <li>line totals</li>
-</ul>
-subtotal / discount / total
-Handles empty state safely
-
-## Cart & Session Handling
-A cart session is created automatically when needed
-Cart ID is stored in a global context
-If the backend returns a session expiration:
-<ul>
-    <li>cart is cleared</li>
-    <li>user sees a clear message</li>
-</ul>
-This aligns with the 2-minute cart expiration requirement
-
-## State Management
-The app uses a React Context (CartContext) for global state:
-
-cartId → active cart session</br>
-lastOrder → used for order summary</br>
-helper methods:
-<ul>
-    <li>setCartId</li>
-    <li>clearCart</li>
-    <li>setLastOrder</li>
-</ul>
-    
-
-Local component state is used for UI concerns such as:
-<ul>
-    <li>loading states</li>
-    <li>error messages </li>
-    <li>quantity selection </li>
-</ul>
-
-This keeps global state minimal and avoids unnecessary complexity.
-
-## API Layer
-
-A small API layer abstracts all backend communication:
-<ul>
-    <li>cart.ts</li>
-    <li>create cart</li>
-    <li>add/update/remove items</li>
-    <li>apply discount</li>
-    <li>checkout</li>
-    <li>products.ts</li>
-    <li>fetch products</li>
-    <li>fetch product by ID</li>
-</ul>
-
-All API calls:
-<ul>
-    <li>handle errors consistently</li>
-    <li>return typed responses</li>
-    <li>surface meaningful error messages to the UI</li>
-</ul>
-
-
-## Error Handling
-
-The app provides clear user feedback:
-<ul>
-    <li>Full-page states</li>
-    <li>loading</li>
-    <li>initial load errors</li>
-    <li>Inline messages</li>
-    <li>stock issues</li>
-    <li>expired sessions</li>
-    <li>API failures</li>
-</ul>
-This ensures users are never left with blank screens or unclear states
-
-## UX Decisions
-
-Some improvements were added to enhance usability:
-
-Inline error messages instead of replacing entire screens
-Quantity controls respect stock limits
-Success feedback when adding to cart
-Category browsing for easier navigation
-Safe fallback states for missing data
-
-## Testing
-
-A meaningful test suite was implemented.
-
-## Tested Areas
-Context
-<ul>
-    <li>CartContext</li>
-            <li>state updates</li>
-            <li>clearing cart</li>
-            <li>provider usage guard</li>
-</ul>
-
-API Layer
-<ul>
-    <li>cart.ts</li>
-    <li>products.ts</li>
-            <li>request behaviour</li>
-            <li>error handling</li>
-            <li>response parsing</li>
-</ul>
-
-Components
-<ul>
-    <li>ProductCard</li>
-    <li>rendering product data</li>
-    <li>quantity controls</li>
-    <li>navigation</li>
-    <li>add to cart behaviour</li>
-    
-</ul>
-
-Screens
-<ul>
-    <li>OrderSummary</li>
-    <li>rendering order data</li>
-    <li>empty state</li>
-    <li>totals display</li>
-    
-</ul>
-
-
-## How to Run Test
+**Backend unit tests:**
 ```bash
+cd backend
+npm run test
+```
+
+**Backend e2e tests:**
+```bash
+cd backend
+npm run test:e2e
+```
+
+**Backend coverage:**
+```bash
+cd backend
+npm run test:cov
+```
+
+**Mobile tests:**
+```bash
+cd mobile
 npm test
 ```
+
+### Backend Test Coverage
+
+| File | Statements | Branches | Functions | Lines |
+|---|---|---|---|---|
+| `cart.service.ts` | 100% | 94% | 100% | 100% |
+| `discount.service.ts` | 100% | 100% | 100% | 100% |
+| `product.service.ts` | 100% | 100% | 100% | 100% |
+| `product.seed.ts` | 100% | 100% | 100% | 100% |
+| `cart.controller.ts` | — | — | — | — |
+| `product.controller.ts` | — | — | — | — |
+
+Controllers are not unit tested directly — they are covered by the e2e test suite which tests the full request lifecycle including routing, validation pipes, and service integration.
+
+### What the backend tests cover
+
+**Unit tests** (`cart.service.spec.ts`, `discount.service.spec.ts`, `product.service.spec.ts`):
+- Cart creation, retrieval, expiry and stock restoration
+- Adding, updating, and removing cart items
+- Discount code validation including boundary cases
+- Product filtering by category and stock management
+
+**End-to-end tests** (`app.e2e-spec.ts`):
+- All product endpoints including category filtering and 404 handling
+- Full cart lifecycle: create → add items → update → remove → checkout
+- DTO validation rejection (invalid quantities, missing fields)
+- Discount code rejection
+
+### Mobile test coverage
+
+| Area | What's tested |
+|---|---|
+| `CartContext` | State updates, cart clearing, provider guard |
+| `cart.ts` API | Request behaviour, error handling, response parsing |
+| `products.ts` API | Fetch behaviour, error handling |
+| `ProductCard` | Rendering, quantity controls, navigation, add to cart |
+| `OrderSummary` | Rendering order data, empty state, totals |
+
+---
+
+## Features
+
+### Backend
+- View product catalogue (with optional category filter)
+- Retrieve a single product by ID
+- Create a cart and manage items (add, update quantity, remove)
+- Apply discount codes
+- Checkout
+- Automatic stock reservation when items are added to cart
+- Stock restored when items are removed or cart expires
+- Cart expires after 2 minutes of inactivity
+
+### Mobile
+- Browse all products or filter by category
+- Product detail view with image, stock level, and quantity selector
+- Cart management with quantity controls and item removal
+- Discount code input with validation feedback
+- Checkout with order summary screen
+- Session expiry handling with clear user feedback
+
+---
+
+## Discount Logic
+
+One discount code is supported:
+
+| Code | Discount | Minimum order |
+|---|---|---|
+| `SAVE10` | 10% off | £100 |
+
+---
+
+## Key Design Decisions
+
+**BFF architecture** — the NestJS backend acts as a Backend-for-Frontend, handling all business logic (stock reservation, discount validation, cart expiry) so the mobile app stays simple.
+
+**In-memory storage** — the product catalogue and cart sessions are stored in memory. Stock is reserved immediately when items are added to a cart and restored on removal or expiry.
+
+**Minimal global state** — the mobile app uses React Context only for `cartId` and `lastOrder`. All other state (loading, errors, quantities) is local to each screen.
+
+**Consistent error handling** — all API calls surface meaningful error messages to the UI. Errors never leave the user with a blank screen.
