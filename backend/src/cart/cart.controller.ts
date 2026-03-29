@@ -8,16 +8,19 @@ import { UpdateItemDto } from './update-item.dto';
 export class CartController {
     constructor(private readonly cartService: CartService) { }
 
+    // Create a new cart session
     @Post()
     createCart(): Cart {
         return this.cartService.createCart();
     }
 
+    // Get cart details including calculated totals
     @Get(':id')
     getCartById(@Param('id') id: string): CartResponse {
         return this.cartService.getCartById(Number(id));
     }
 
+    // Add a product to the cart
     @Post(':id/items')
     addItemToCart(
         @Param('id') id: string,
@@ -30,6 +33,7 @@ export class CartController {
         );
     }
 
+    // Update quantity of a specific item in the cart
     @Patch(':id/items/:productId')
     updateItemQuantity(
         @Param('id') id: string,
@@ -43,6 +47,7 @@ export class CartController {
         );
     }
 
+     // Remove an item from the cart
     @Delete(':id/items/:productId')
     removeItemFromCart(
         @Param('id') id: string,
@@ -54,11 +59,13 @@ export class CartController {
         );
     }
 
+    // Perform checkout for the cart
     @Post(':id/checkout')
     checkout(@Param('id') id: string) {
         return this.cartService.checkout(Number(id));
     }
 
+    // Apply a discount code to the cart
     @Post(':id/discount')
     applyDiscount(
         @Param('id') id: string,

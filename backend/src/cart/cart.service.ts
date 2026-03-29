@@ -9,13 +9,15 @@ import { DiscountService } from 'src/discount/discount.service';
 
 @Injectable()
 export class CartService {
+   // In-memory cart storage
   private carts: Cart[] = [];
 
   constructor(
     private readonly productService: ProductService,
     private readonly discountService: DiscountService,
   ) {}
-
+  
+  // Creates a new empty cart session
   createCart(): Cart {
     const now = Date.now();
 
@@ -31,17 +33,20 @@ export class CartService {
     return newCart;
   }
 
+  // Checks whether a cart has been inactive for more than 2 minutes
   private isCartExpired(cart: Cart): boolean {
     const twoMinutesInMilliseconds = 2 * 60 * 1000;
     return Date.now() - cart.updatedAt > twoMinutesInMilliseconds;
   }
 
+  // Restores reserved stock back to products when a cart expires or items are removed
   private releaseCartStock(cart: Cart) {
     for (const item of cart.items) {
       this.productService.restoreStock(item.productId, item.quantity);
     }
   }
 
+  // Returns an active cart or throws if the cart does not exist or has expired
   private getActiveCart(cartId: number): Cart {
     const cart = this.carts.find((item) => item.id === cartId);
 
@@ -59,6 +64,7 @@ export class CartService {
     return cart;
   }
 
+  // Builds an enriched cart response with product details, totals and discount
   private buildCartResponse(cart: Cart): CartResponse {
     const items = cart.items.map((item) => {
       const product = this.productService.getProductById(item.productId);
@@ -84,6 +90,7 @@ export class CartService {
           subtotal,
         );
       } catch {
+        // If the stored discount code is no longer valid, remove it from the cart
         cart.discountCode = undefined;
         discount = 0;
       }
@@ -103,6 +110,7 @@ export class CartService {
     };
   }
 
+  // Applies a discount code after validating it against the cart subtotal
   applyDiscount(cartId: number, code: string): CartResponse {
     const cart = this.getActiveCart(cartId);
 
@@ -119,11 +127,13 @@ export class CartService {
     return this.buildCartResponse(cart);
   }
 
+   // Returns a cart by id in API response format
   getCartById(id: number): CartResponse {
     const cart = this.getActiveCart(id);
     return this.buildCartResponse(cart);
   }
 
+  // Adds an item to the cart and reserves stock immediately
   addItemToCart(
     cartId: number,
     productId: number,
@@ -158,6 +168,7 @@ export class CartService {
     return this.buildCartResponse(cart);
   }
 
+  // Updates the quantity of an existing cart item and adjusts reserved stock accordingly
   updateItemQuantity(
     cartId: number,
     productId: number,
@@ -196,6 +207,7 @@ export class CartService {
     return this.buildCartResponse(cart);
   }
 
+  // Removes an item from the cart and releases its reserved stock
   removeItemFromCart(cartId: number, productId: number): CartResponse {
     const cart = this.getActiveCart(cartId);
 
@@ -220,6 +232,7 @@ export class CartService {
     return this.buildCartResponse(cart);
   }
 
+  // Finalises the order and clears the cart after a successful checkout
   checkout(cartId: number) {
     const cart = this.getActiveCart(cartId);
 

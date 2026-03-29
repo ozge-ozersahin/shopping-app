@@ -1,3 +1,5 @@
+// Represents a product in the in-memory catalogue
+
 export interface Product {
     id: number;
     name: string;
