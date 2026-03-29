@@ -20,6 +20,7 @@ export default function CategoriesScreen() {
   };
 
   const getCategoryKey = (item: CategoryOption) => item.id;
+  
 
   return (
     <View style={styles.container}>

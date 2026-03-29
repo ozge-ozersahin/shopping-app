@@ -10,7 +10,7 @@ import { ProductService } from 'src/products/product.service';
 export class CartService {
   private carts: Cart[] = [];
 
-  constructor(private readonly productService: ProductService) { }
+  constructor(private readonly productService: ProductService) {}
 
   private calculateDiscount(subtotal: number): number {
     if (subtotal >= 100) {
@@ -40,6 +40,12 @@ export class CartService {
     return Date.now() - cart.updatedAt > twoMinutesInMilliseconds;
   }
 
+  private releaseCartStock(cart: Cart) {
+    for (const item of cart.items) {
+      this.productService.restoreStock(item.productId, item.quantity);
+    }
+  }
+
   private getActiveCart(cartId: number): Cart {
     const cart = this.carts.find((item) => item.id === cartId);
 
@@ -48,6 +54,7 @@ export class CartService {
     }
 
     if (this.isCartExpired(cart)) {
+      this.releaseCartStock(cart);
       cart.items = [];
       throw new BadRequestException('Cart has expired');
     }
@@ -69,7 +76,6 @@ export class CartService {
     });
 
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-
     const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
     const discount = this.calculateDiscount(subtotal);
     const total = subtotal - discount;
@@ -79,10 +85,10 @@ export class CartService {
       items,
       totalItems,
       subtotal,
-      createdAt: cart.createdAt,
-      updatedAt: cart.updatedAt,
       discount,
       total,
+      createdAt: cart.createdAt,
+      updatedAt: cart.updatedAt,
     };
   }
 
@@ -91,28 +97,28 @@ export class CartService {
     return this.buildCartResponse(cart);
   }
 
-  addItemToCart(cartId: number, productId: number, quantity: number): CartResponse {
+  addItemToCart(
+    cartId: number,
+    productId: number,
+    quantity: number,
+  ): CartResponse {
     const cart = this.getActiveCart(cartId);
-
     const product = this.productService.getProductById(productId);
 
     if (quantity < 1) {
       throw new BadRequestException('Quantity must be at least 1');
     }
 
-    const existingItem = cart.items.find(
-      (item) => item.productId === productId,
-    );
-
-    const currentQuantity = existingItem ? existingItem.quantity : 0;
-    const newQuantity = currentQuantity + quantity;
-
-    if (newQuantity > product.stock) {
+    if (quantity > product.stock) {
       throw new BadRequestException(`Not enough stock for ${product.name}`);
     }
 
+    const existingItem = cart.items.find((item) => item.productId === productId);
+
+    this.productService.reduceStock(productId, quantity);
+
     if (existingItem) {
-      existingItem.quantity = newQuantity;
+      existingItem.quantity += quantity;
     } else {
       cart.items.push({
         productId,
@@ -131,23 +137,30 @@ export class CartService {
     quantity: number,
   ): CartResponse {
     const cart = this.getActiveCart(cartId);
-
     const product = this.productService.getProductById(productId);
 
     if (quantity < 1) {
       throw new BadRequestException('Quantity must be at least 1');
     }
 
-    const existingItem = cart.items.find(
-      (item) => item.productId === productId,
-    );
+    const existingItem = cart.items.find((item) => item.productId === productId);
 
     if (!existingItem) {
       throw new NotFoundException('Item not found in cart');
     }
 
-    if (quantity > product.stock) {
-      throw new BadRequestException(`Not enough stock for ${product.name}`);
+    const difference = quantity - existingItem.quantity;
+
+    if (difference > 0) {
+      if (difference > product.stock) {
+        throw new BadRequestException(`Not enough stock for ${product.name}`);
+      }
+
+      this.productService.reduceStock(productId, difference);
+    }
+
+    if (difference < 0) {
+      this.productService.restoreStock(productId, Math.abs(difference));
     }
 
     existingItem.quantity = quantity;
@@ -167,6 +180,12 @@ export class CartService {
       throw new NotFoundException('Item not found in cart');
     }
 
+    const itemToRemove = cart.items[itemIndex];
+    this.productService.restoreStock(
+      itemToRemove.productId,
+      itemToRemove.quantity,
+    );
+
     cart.items.splice(itemIndex, 1);
     cart.updatedAt = Date.now();
 
@@ -178,22 +197,6 @@ export class CartService {
 
     if (cart.items.length === 0) {
       throw new BadRequestException('Cart is empty');
-    }
-
-
-    for (const item of cart.items) {
-      const product = this.productService.getProductById(item.productId);
-
-      if (item.quantity > product.stock) {
-        throw new BadRequestException(
-          `Not enough stock for ${product.name}`,
-        );
-      }
-    }
-
-
-    for (const item of cart.items) {
-      this.productService.reduceStock(item.productId, item.quantity);
     }
 
     const response = this.buildCartResponse(cart);

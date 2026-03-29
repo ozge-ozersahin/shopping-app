@@ -1,20 +1,28 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { Stack, useLocalSearchParams } from 'expo-router';
+
+import { addItemToCart, createCart } from '@/src/api/cart';
 import { getProducts } from '@/src/api/products';
 import ProductCard from '@/src/components/ProductCard';
+import { useCartContext } from '@/src/context/CartContext';
 import type { Category } from '@/src/types/category';
 import type { Product } from '@/src/types/product';
-import { createCart, addItemToCart } from '@/src/api/cart';
-import { useCartContext } from '@/src/context/CartContext';
-import { Stack, useLocalSearchParams } from 'expo-router';
 
 export default function CategoryProductsScreen() {
   const { category } = useLocalSearchParams<{ category: string }>();
-  const { cartId, setCartId, clearCart } = useCartContext();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const { cartId, setCartId, clearCart } = useCartContext();
 
   useEffect(() => {
     async function loadProducts() {
@@ -47,6 +55,10 @@ export default function CategoryProductsScreen() {
       }
 
       await addItemToCart(currentCartId, productId, quantity);
+
+      const updatedProducts = await getProducts(category as Category);
+      setProducts(updatedProducts);
+
       setError('');
     } catch (err: any) {
       const message = String(err?.message || '').toLowerCase();
@@ -77,7 +89,7 @@ export default function CategoryProductsScreen() {
     );
   }
 
-  if (error) {
+  if (error && products.length === 0) {
     return (
       <View style={styles.centerContent}>
         <Text style={styles.errorText}>{error}</Text>
@@ -88,15 +100,20 @@ export default function CategoryProductsScreen() {
   return (
     <>
       <Stack.Screen options={{ title: `${category} Products` }} />
+
       <View style={styles.container}>
         <Text style={styles.title}>{category} products</Text>
+
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <FlatList
           data={products}
           keyExtractor={getProductKey}
           renderItem={renderProduct}
           ListEmptyComponent={<Text>No products found for this category.</Text>}
-          contentContainerStyle={products.length === 0 ? styles.emptyList : undefined}
+          contentContainerStyle={
+            products.length === 0 ? styles.emptyList : { paddingBottom: 24 }
+          }
         />
       </View>
     </>
@@ -126,6 +143,8 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 12,
   },
   emptyList: {
     flexGrow: 1,

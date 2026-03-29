@@ -6,6 +6,8 @@ import { getProducts } from '@/src/api/products';
 import ProductCard from '@/src/components/ProductCard';
 import { useCartContext } from '@/src/context/CartContext';
 import type { Product } from '@/src/types/product';
+import { useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 
 export default function ProductsScreen() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -14,54 +16,58 @@ export default function ProductsScreen() {
 
   const { cartId, setCartId, clearCart } = useCartContext();
 
-  useEffect(() => {
-    async function loadInitialData() {
-      try {
-        setLoading(true);
-        setError('');
-
-        const productsData = await getProducts();
-        setProducts(productsData);
-      } catch (err) {
-        console.log('PRODUCTS FETCH ERROR', err);
-        setError('Could not load products.');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        if (!cartId) {
-          const cartData = await createCart();
-          setCartId(cartData.id);
+  useFocusEffect(
+    useCallback(() => {
+      async function loadInitialData() {
+        try {
+          setLoading(true);
+          setError('');
+  
+          const productsData = await getProducts();
+          setProducts(productsData);
+        } catch (err) {
+          console.log('PRODUCTS FETCH ERROR', err);
+          setError('Could not load products.');
+          setLoading(false);
+          return;
         }
-      } catch (err) {
-        console.log('CREATE CART ERROR', err);
-        setError('Could not create cart session.');
-      } finally {
-        setLoading(false);
+  
+        try {
+          if (!cartId) {
+            const cartData = await createCart();
+            setCartId(cartData.id);
+          }
+        } catch (err) {
+          console.log('CREATE CART ERROR', err);
+          setError('Could not create cart session.');
+        } finally {
+          setLoading(false);
+        }
       }
-    }
-
-    loadInitialData();
-  }, [cartId, setCartId]);
+  
+      loadInitialData();
+    }, [cartId, setCartId])
+  );
 
   const handleAddToCart = async (productId: number, quantity: number) => {
     try {
       let currentCartId = cartId;
-
+  
       if (!currentCartId) {
         const newCart = await createCart();
         currentCartId = newCart.id;
         setCartId(newCart.id);
       }
-
+  
       await addItemToCart(currentCartId, productId, quantity);
+  
+      const updatedProducts = await getProducts();
+      setProducts(updatedProducts);
+  
       setError('');
     } catch (err: any) {
-
-
       const message = String(err?.message || '').toLowerCase();
-
+  
       if (message.includes('expired')) {
         clearCart();
         setError('Your session has expired. Please start again.');
