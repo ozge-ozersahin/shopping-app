@@ -29,8 +29,10 @@ shopping-app/
 │   │   ├── discount/         # Discount code validation
 │   │   └── main.ts           # App entry point
 │   └── test/
-│       ├── cart.service.spec.ts   # Unit tests for cart logic
-│       └── app.e2e-spec.ts        # End-to-end API tests
+│       ├── cart.service.spec.ts      # Unit tests for cart service
+│       ├── discount.service.spec.ts  # Unit tests for discount service
+│       ├── product.service.spec.ts   # Unit tests for product service
+│       └── app.e2e-spec.ts           # End-to-end API tests
 │
 └── mobile/                   # React Native (Expo) app
     ├── app/
@@ -38,9 +40,17 @@ shopping-app/
     │   ├── products/         # Product detail and category views
     │   └── order-summary.tsx # Post-checkout summary
     └── src/
-        ├── api/              # Fetch wrappers for backend communication
-        ├── components/       # Shared UI components (ProductCard, etc.)
-        ├── context/          # CartContext for global cart state
+        ├── api/
+        │   ├── cart.ts               # Cart API calls
+        │   ├── cart.test.ts          # Cart API tests
+        │   ├── products.ts           # Product API calls
+        │   └── products.test.ts      # Product API tests
+        ├── components/
+        │   ├── ProductCard.tsx
+        │   └── ProductCard.test.tsx  # Component tests
+        ├── context/
+        │   ├── CartContext.tsx
+        │   └── CartContext.test.tsx  # Context tests
         ├── constants/        # API config
         └── types/            # Shared TypeScript types
 ```
